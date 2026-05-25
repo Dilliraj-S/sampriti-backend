@@ -29,6 +29,16 @@ exports.get = async (req, res) => {
   }
 };
 
+exports.getBySlug = async (req, res) => {
+  try {
+    const product = await Product.findOne({ where: { slug: req.params.slug }, include: [{ model: Category, as: 'category' }] });
+    if (!product) return res.status(404).json({ status: false, message: 'Product not found' });
+    res.json({ status: true, data: product });
+  } catch (err) {
+    res.status(500).json({ status: false, message: err.message });
+  }
+};
+
 exports.create = async (req, res) => {
   try {
     const slug = req.body.slug || req.body.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');

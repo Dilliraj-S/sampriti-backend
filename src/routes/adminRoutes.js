@@ -20,6 +20,7 @@ router.get('/dashboard', dashboardCtrl.dashboard);
 // Products
 router.get('/products', productCtrl.list);
 router.get('/products/latest', productCtrl.latest);
+router.get('/products/slug/:slug', productCtrl.getBySlug);
 router.get('/products/:id', productCtrl.get);
 router.post('/products', productCtrl.create);
 router.put('/products/:id', productCtrl.update);
