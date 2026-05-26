@@ -1,5 +1,13 @@
 const { Product, Category } = require('../models');
 
+const validHomepageSections = new Set(['home', 'influence', 'infusions', 'skincare', 'fragrance', 'ceremony', 'atmosphere']);
+
+const normalizeHomepageSection = (data) => {
+  if (!Object.prototype.hasOwnProperty.call(data, 'homepageSection')) return data;
+  if (!validHomepageSections.has(data.homepageSection)) data.homepageSection = null;
+  return data;
+};
+
 exports.list = async (req, res) => {
   try {
     const products = await Product.findAll({ include: [{ model: Category, as: 'category', attributes: ['id', 'name', 'slug'] }], order: [['createdAt', 'ASC']] });
@@ -42,7 +50,7 @@ exports.getBySlug = async (req, res) => {
 exports.create = async (req, res) => {
   try {
     const slug = req.body.slug || req.body.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-    const product = await Product.create({ ...req.body, slug });
+    const product = await Product.create(normalizeHomepageSection({ ...req.body, slug }));
     res.status(201).json({ status: true, data: product });
   } catch (err) {
     res.status(500).json({ status: false, message: err.message });
@@ -53,7 +61,7 @@ exports.update = async (req, res) => {
   try {
     const product = await Product.findByPk(req.params.id);
     if (!product) return res.status(404).json({ status: false, message: 'Product not found' });
-    const data = { ...req.body };
+    const data = normalizeHomepageSection({ ...req.body });
     if (data.name && !data.slug) data.slug = data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
     await product.update(data);
     res.json({ status: true, data: product });
