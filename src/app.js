@@ -13,6 +13,7 @@ app.use(cors({ origin: true, credentials: true }));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
+app.use('/assets', express.static(path.join(__dirname, '../public/assets')));
 
 app.get('/', (req, res) => {
   res.status(200).json({ message: 'Sampriti Botanicals Backend API is running' });
