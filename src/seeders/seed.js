@@ -29,6 +29,7 @@ const seed = async () => {
         usageDetails: JSON.stringify([{ title: 'Morning Ritual', desc: 'Start your day with clarity and grounded energy.' }, { title: 'Midday Sustain', desc: 'Sustain energy without the crash.' }]),
         aroma: 'Earthy, warm, with notes of cinnamon and tulsi', suitedTo: 'Vata and Kapha constitutions',
         benefits: 'Enhances vitality, supports adrenal health, boosts immunity', format: '35g powder',
+        galleryImages: JSON.stringify(['/Assets/shakti peya.avif', '/Assets/shakti peya product hd.png', '/Assets/shakti peya product display.png', '/Assets/shakti peya product clean.png', '/Assets/shakti peya product 1.png', '/Assets/shakti peya hover.png']),
         status: 'active',
       },
       {
@@ -43,6 +44,7 @@ const seed = async () => {
         usageDetails: JSON.stringify([{ title: 'Evening Wind-Down', desc: 'A nightly ritual to quiet the mind.' }, { title: 'Deep Rest', desc: 'Encourages restful sleep and vivid dreams.' }]),
         aroma: 'Floral, sweet, with earthy undertones', suitedTo: 'Pitta and Vata constitutions',
         benefits: 'Calms the nervous system, promotes restful sleep, balances hormones', format: '40g powder',
+        galleryImages: JSON.stringify(['/Assets/chandra rasa.avif', '/Assets/Chandra rasa product hd.webp', '/Assets/Chandra rasa product display.webp', '/Assets/Chandra rasa product clean.webp', '/Assets/Chandra rasa product 1.webp', '/Assets/chandra rasa hover.webp']),
         status: 'active',
       },
       {
@@ -57,6 +59,7 @@ const seed = async () => {
         usageDetails: JSON.stringify([{ title: 'Daily Mist', desc: 'Spritz on face for instant hydration.' }, { title: 'Hair Rinse', desc: 'Use after shampoo for shine.' }]),
         aroma: 'Fresh, floral with tart undertones', suitedTo: 'All skin types, especially oily',
         benefits: 'Rich in antioxidants, promotes collagen production, adds shine to hair', format: '100ml',
+        galleryImages: JSON.stringify(['/Assets/hibiscus hd.png', '/Assets/hibiscus new.png', '/Assets/hibiscus display.png', '/Assets/hibiscus clean.png', '/Assets/hibiscus hover.png']),
         status: 'active',
       },
       {
@@ -71,6 +74,7 @@ const seed = async () => {
         usageDetails: JSON.stringify([{ title: 'Pulse Point', desc: 'Apply to wrists and neck.' }, { title: 'Space Mist', desc: 'Add to diffuser for a calming atmosphere.' }]),
         aroma: 'Deep floral, honeyed, with woody undertones', suitedTo: 'All skin types, especially mature',
         benefits: 'Balances moisture, soothes irritation, elevates mood', format: '50ml',
+        galleryImages: JSON.stringify(['/Assets/rose hd.webp', '/Assets/rose new.webp', '/Assets/rose display.webp', '/Assets/rose clean.webp', '/Assets/Rose hover.webp', '/Assets/Sampriti Rose zoom out.png']),
         status: 'active',
       },
       {
@@ -85,6 +89,7 @@ const seed = async () => {
         usageDetails: JSON.stringify([{ title: 'Morning Clarity', desc: 'Start your day with clear focus.' }, { title: 'Afternoon Reset', desc: 'A caffeine-free energy boost.' }]),
         aroma: 'Earthy, floral with citrus notes', suitedTo: 'All constitutions, especially Pitta',
         benefits: 'Enhances cognitive function, rich in anthocyanins, promotes calm focus', format: '30g',
+        galleryImages: JSON.stringify(['/Assets/blue butterfly pea hd.webp', '/Assets/blue butterfly pea new.webp', '/Assets/blue butterfly pea display.webp', '/Assets/blue butterfly pea clean.webp', '/Assets/blue butterfly pea hover.webp']),
         status: 'active',
       },
       {

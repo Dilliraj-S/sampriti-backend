@@ -21,6 +21,7 @@ const Product = sequelize.define('Product', {
   suitedTo: { type: DataTypes.STRING(300) },
   benefits: { type: DataTypes.TEXT },
   format: { type: DataTypes.STRING(100) },
+  galleryImages: { type: DataTypes.JSON },
   homepageSection: { type: DataTypes.ENUM('home', 'influence', 'infusions', 'skincare', 'fragrance', 'ceremony', 'atmosphere'), allowNull: true },
   status: { type: DataTypes.ENUM('active', 'out_of_stock', 'low_stock'), defaultValue: 'active' },
 }, { timestamps: true, tableName: 'products' });
