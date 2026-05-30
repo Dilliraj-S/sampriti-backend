@@ -10,7 +10,7 @@ const BlogPost = sequelize.define('BlogPost', {
   excerpt: { type: DataTypes.TEXT },
   image: { type: DataTypes.STRING(500) },
   views: { type: DataTypes.INTEGER, defaultValue: 0 },
-  status: { type: DataTypes.ENUM('draft', 'published', 'scheduled'), defaultValue: 'draft' },
+  status: { type: DataTypes.ENUM('published', 'scheduled'), defaultValue: 'published' },
   publishDate: { type: DataTypes.DATEONLY },
 }, { timestamps: true, tableName: 'blog_posts' });
 

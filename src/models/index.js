@@ -22,6 +22,7 @@ Review.belongsTo(Product, { foreignKey: 'productId', as: 'product' });
 const syncDB = async () => {
   try {
     await sequelize.sync({ alter: true });
+    await BlogPost.update({ status: 'published' }, { where: { status: 'draft' } });
     console.log('Database synced successfully');
   } catch (error) {
     console.error('Database sync failed:', error.message);
