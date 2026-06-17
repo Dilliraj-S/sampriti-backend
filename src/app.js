@@ -20,7 +20,16 @@ app.use(helmet({ contentSecurityPolicy: false }));
 
 // ── CORS — credentials: true required for HttpOnly cookie on /api/auth/refresh ─
 app.use(cors({
-  origin:      process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: function (origin, callback) {
+    const allowed = [
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'http://localhost:3002',
+      process.env.FRONTEND_URL,
+    ].filter(Boolean);
+    if (!origin || allowed.includes(origin)) return callback(null, true);
+    callback(null, true);
+  },
   credentials: true,
   methods:     ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
 }));
@@ -41,6 +50,7 @@ app.get('/', (req, res) => {
 // ── Routes ────────────────────────────────────────────────────────────────────
 app.use('/api/auth',  authRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api',       require('./routes/publicRoutes'));
 
 // ── Global error handler ──────────────────────────────────────────────────────
 app.use((err, req, res, next) => {
@@ -54,10 +64,11 @@ const runMigration = async () => {
   if (!fs.existsSync(sqlPath)) return;
 
   const sql = fs.readFileSync(sqlPath, 'utf8');
-  const statements = sql
+  const cleanSql = sql.replace(/^--.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
+  const statements = cleanSql
     .split(';')
     .map(s => s.trim())
-    .filter(s => s.length > 0 && !s.startsWith('--'));
+    .filter(s => s.length > 0);
 
   const conn = await mysql.createConnection({
     host:     process.env.DB_HOST || 'localhost',

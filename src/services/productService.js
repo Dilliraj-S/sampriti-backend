@@ -121,11 +121,41 @@ const deleteProduct = async (id) => {
   await product.destroy();
 };
 
+/**
+ * Search products by keyword across name, description, ingredients, etc.
+ * @param {string} query
+ * @returns {Promise<Product[]>}
+ */
+const searchProducts = async (query) => {
+  const { Op } = require('sequelize');
+  const q = `%${query}%`;
+  return Product.findAll({
+    where: {
+      status: 'active',
+      [Op.or]: [
+        { name:             { [Op.like]: q } },
+        { subtitle:         { [Op.like]: q } },
+        { description:      { [Op.like]: q } },
+        { keyIngredients:   { [Op.like]: q } },
+        { aroma:            { [Op.like]: q } },
+        { benefits:         { [Op.like]: q } },
+        { essence:          { [Op.like]: q } },
+        { howToUse:         { [Op.like]: q } },
+        { format:           { [Op.like]: q } },
+      ],
+    },
+    include: [{ model: Category, as: 'category', attributes: ['id', 'name', 'slug'] }],
+    limit: 20,
+    order: [['name', 'ASC']],
+  });
+};
+
 module.exports = {
   getAllProducts,
   getLatestProduct,
   getProductById,
   getProductBySlug,
+  searchProducts,
   createProduct,
   updateProduct,
   deleteProduct,
