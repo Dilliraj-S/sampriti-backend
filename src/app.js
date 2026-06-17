@@ -64,8 +64,7 @@ const runMigration = async () => {
   if (!fs.existsSync(sqlPath)) return;
 
   const sql = fs.readFileSync(sqlPath, 'utf8');
-  const cleanSql = sql.replace(/^--.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
-  const statements = cleanSql
+  const statements = sql
     .split(';')
     .map(s => s.trim())
     .filter(s => s.length > 0);
