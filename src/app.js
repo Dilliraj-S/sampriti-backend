@@ -53,11 +53,12 @@ const runMigration = async () => {
   const sqlPath = path.join(__dirname, 'db/migrations/001_auth_tables.sql');
   if (!fs.existsSync(sqlPath)) return;
 
-  const sql = fs.readFileSync(sqlPath, 'utf8');
+  let sql = fs.readFileSync(sqlPath, 'utf8');
+  sql = sql.replace(/--.*$/gm, '').replace(/\n\s*\n/g, '\n');
   const statements = sql
     .split(';')
     .map(s => s.trim())
-    .filter(s => s.length > 0 && !s.startsWith('--'));
+    .filter(s => s.length > 0);
 
   const conn = await mysql.createConnection({
     host:     process.env.DB_HOST || 'localhost',
