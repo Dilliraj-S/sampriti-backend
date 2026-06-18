@@ -54,6 +54,7 @@ app.get('/', (req, res) => {
 // ── Routes ────────────────────────────────────────────────────────────────────
 app.use('/api/auth',  authRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/payments', require('./routes/paymentRoutes'));
 app.use('/api',       require('./routes/publicRoutes'));
 
 // ── Global error handler ──────────────────────────────────────────────────────

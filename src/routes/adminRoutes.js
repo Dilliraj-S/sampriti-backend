@@ -89,4 +89,8 @@ router.put('/settings', settingCtrl.update);
 router.post('/upload', upload.single('file'), uploadCtrl.uploadImage);
 router.delete('/upload/:filename', uploadCtrl.deleteImage);
 
+// Payment Transactions (admin)
+const paymentCtrl = require('../controllers/paymentController');
+router.get('/payment-transactions', paymentCtrl.listTransactions);
+
 module.exports = router;

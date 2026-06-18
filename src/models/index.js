@@ -9,6 +9,7 @@ const ShippingZone = require('./ShippingZone');
 const Review = require('./Review');
 const BlogPost = require('./BlogPost');
 const Setting = require('./Setting');
+const PaymentTransaction = require('./PaymentTransaction');
 
 Category.hasMany(Product, { foreignKey: 'categoryId', as: 'products' });
 Product.belongsTo(Category, { foreignKey: 'categoryId', as: 'category' });
@@ -18,6 +19,9 @@ Order.belongsTo(Customer, { foreignKey: 'customerId', as: 'customer' });
 
 Product.hasMany(Review, { foreignKey: 'productId', as: 'reviews' });
 Review.belongsTo(Product, { foreignKey: 'productId', as: 'product' });
+
+Order.hasMany(PaymentTransaction, { foreignKey: 'orderId', as: 'transactions' });
+PaymentTransaction.belongsTo(Order, { foreignKey: 'orderId', as: 'order' });
 
 const syncDB = async () => {
   try {
@@ -42,4 +46,5 @@ module.exports = {
   Review,
   BlogPost,
   Setting,
+  PaymentTransaction,
 };
