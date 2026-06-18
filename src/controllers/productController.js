@@ -37,6 +37,17 @@ exports.getBySlug = async (req, res) => {
   }
 };
 
+exports.search = async (req, res) => {
+  try {
+    const q = (req.query.q || '').trim();
+    if (!q) return res.json({ status: true, data: [] });
+    const data = await productService.searchProducts(q);
+    res.json({ status: true, data });
+  } catch (err) {
+    res.status(err.statusCode || 500).json({ status: false, message: err.message });
+  }
+};
+
 exports.create = async (req, res) => {
   try {
     const data = await productService.createProduct(req.body);
