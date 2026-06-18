@@ -6,10 +6,14 @@ const ua        = (req) => req.headers['user-agent'] || '';
 const cookieOpts = {
   httpOnly: true,
   secure:   process.env.NODE_ENV === 'production',
-  sameSite: 'strict',
+  // 'none' is required when frontend (sampritibotanicals.codespidey.com) and
+  // backend (sampritibackend.codespidey.com) are on different subdomains.
+  // 'strict' blocks cross-origin cookies entirely.
+  sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
   maxAge:   cfg.REFRESH_TOKEN_EXPIRY_MS,
   path:     '/',
 };
+
 
 // POST /api/auth/register
 exports.register = async (req, res) => {

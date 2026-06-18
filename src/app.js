@@ -15,6 +15,10 @@ const { seedAdminUser } = require('./services/authService');
 const app  = express();
 const PORT = process.env.PORT || 5000;
 
+// ── Trust Hostinger's nginx reverse proxy ─────────────────────────────────────
+// Required for express-rate-limit to correctly read client IPs via X-Forwarded-For
+app.set('trust proxy', 1);
+
 // ── Security headers ──────────────────────────────────────────────────────────
 app.use(helmet({ contentSecurityPolicy: false }));
 
@@ -58,6 +62,8 @@ const runMigration = async () => {
     .split(';')
     .map(s => s.trim())
     .filter(s => s.length > 0 && !s.startsWith('--'));
+
+
 
   const conn = await mysql.createConnection({
     host:     process.env.DB_HOST || 'localhost',
