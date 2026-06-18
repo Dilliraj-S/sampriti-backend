@@ -390,13 +390,84 @@ const resetPassword = async ({ token, password }, ip, userAgent) => {
 
 const getMe = async (userId) => {
   const [rows] = await pool.query(
-    'SELECT id, email, full_name, phone, role, avatar_url, created_at FROM users WHERE id = ? AND is_active = 1 LIMIT 1',
+    `SELECT id, email, full_name, phone, role, avatar_url, created_at,
+            address_line1, address_line2, city, state, pincode, country
+     FROM users WHERE id = ? AND is_active = 1 LIMIT 1`,
     [userId]
   );
   if (rows.length === 0) {
     const err = new Error('User not found.'); err.statusCode = 404; throw err;
   }
   return rows[0];
+};
+
+// ─────────────────────────────────────────────
+// UPDATE PROFILE
+// ─────────────────────────────────────────────
+
+const updateProfile = async (userId, fields) => {
+  const allowed = ['full_name', 'phone', 'address_line1', 'address_line2', 'city', 'state', 'pincode', 'country'];
+  const updates = [];
+  const values  = [];
+  for (const key of allowed) {
+    if (fields[key] !== undefined) {
+      updates.push(`${key} = ?`);
+      values.push(fields[key] !== null && typeof fields[key] === 'string' ? fields[key].trim() || null : fields[key]);
+    }
+  }
+  if (updates.length === 0) {
+    const err = new Error('Nothing to update.'); err.statusCode = 400; throw err;
+  }
+  values.push(userId);
+  await pool.query(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`, values);
+  const [rows] = await pool.query(
+    `SELECT id, email, full_name, phone, role, avatar_url, created_at,
+            address_line1, address_line2, city, state, pincode, country
+     FROM users WHERE id = ? LIMIT 1`,
+    [userId]
+  );
+  return rows[0];
+};
+
+// ─────────────────────────────────────────────
+// CHANGE PASSWORD
+// ─────────────────────────────────────────────
+
+const changePassword = async (userId, { oldPassword, newPassword }) => {
+  const [rows] = await pool.query('SELECT password_hash FROM users WHERE id = ? LIMIT 1', [userId]);
+  if (rows.length === 0) {
+    const err = new Error('User not found.'); err.statusCode = 404; throw err;
+  }
+  const isMatch = await comparePassword(oldPassword, rows[0].password_hash);
+  if (!isMatch) {
+    const err = new Error('Current password is incorrect.'); err.statusCode = 400; throw err;
+  }
+  const newHash = await hashPassword(newPassword);
+  await pool.query('UPDATE users SET password_hash = ? WHERE id = ?', [newHash, userId]);
+  return { message: 'Password changed successfully.' };
+};
+
+// ─────────────────────────────────────────────
+// MY ORDERS (customer-facing)
+// ─────────────────────────────────────────────
+
+const getMyOrders = async (userId) => {
+  // Orders are linked to the customers table by email.
+  // First find the customer record matching this user's email.
+  const [users] = await pool.query('SELECT email FROM users WHERE id = ? LIMIT 1', [userId]);
+  if (users.length === 0) return [];
+
+  const email = users[0].email;
+  // Find matching customer record
+  const [customers] = await pool.query('SELECT id FROM customers WHERE email = ? LIMIT 1', [email]);
+  if (customers.length === 0) return [];
+
+  const customerId = customers[0].id;
+  const [orders] = await pool.query(
+    'SELECT id, items, total, status, paymentMethod, paymentStatus, createdAt FROM orders WHERE customerId = ? ORDER BY createdAt DESC LIMIT 20',
+    [customerId]
+  );
+  return orders;
 };
 
 module.exports = {
@@ -411,4 +482,7 @@ module.exports = {
   forgotPassword,
   resetPassword,
   getMe,
+  updateProfile,
+  changePassword,
+  getMyOrders,
 };

@@ -48,8 +48,9 @@ const getTransporter = async () => {
  */
 const sendOtpEmail = async (to, otp, name) => {
   const t = await getTransporter();
+  const fromEmail = process.env.MAIL_USER || 'no-reply@sampritibotanicals.com';
   const info = await t.sendMail({
-    from:    `"Sampriti Botanicals" <no-reply@sampritibotanicals.com>`,
+    from:    `"Sampriti Botanicals" <${fromEmail}>`,
     to,
     subject: 'Verify your email — Sampriti Botanicals',
     html: `
@@ -82,9 +83,10 @@ const sendPasswordResetEmail = async (to, resetToken, name) => {
   const t = await getTransporter();
   const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
   const resetLink = `${frontendUrl}/reset-password?token=${resetToken}`;
+  const fromEmail = process.env.MAIL_USER || 'no-reply@sampritibotanicals.com';
 
   const info = await t.sendMail({
-    from:    `"Sampriti Botanicals" <no-reply@sampritibotanicals.com>`,
+    from:    `"Sampriti Botanicals" <${fromEmail}>`,
     to,
     subject: 'Reset your password — Sampriti Botanicals',
     html: `

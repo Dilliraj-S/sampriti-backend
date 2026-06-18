@@ -133,3 +133,43 @@ exports.getMe = async (req, res) => {
     res.status(err.statusCode || 500).json({ status: false, message: err.message });
   }
 };
+
+// PUT /api/auth/me
+exports.updateProfile = async (req, res) => {
+  try {
+    const { full_name, phone, address_line1, address_line2, city, state, pincode, country } = req.body;
+    const data = await authService.updateProfile(req.user.id, {
+      full_name, phone, address_line1, address_line2, city, state, pincode, country,
+    });
+    res.json({ status: true, data });
+  } catch (err) {
+    res.status(err.statusCode || 500).json({ status: false, message: err.message });
+  }
+};
+
+// PUT /api/auth/change-password
+exports.changePassword = async (req, res) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+    if (!oldPassword || !newPassword) {
+      return res.status(400).json({ status: false, message: 'oldPassword and newPassword are required.' });
+    }
+    if (newPassword.length < 6) {
+      return res.status(400).json({ status: false, message: 'New password must be at least 6 characters.' });
+    }
+    const data = await authService.changePassword(req.user.id, { oldPassword, newPassword });
+    res.json({ status: true, ...data });
+  } catch (err) {
+    res.status(err.statusCode || 500).json({ status: false, message: err.message });
+  }
+};
+
+// GET /api/auth/my-orders
+exports.getMyOrders = async (req, res) => {
+  try {
+    const data = await authService.getMyOrders(req.user.id);
+    res.json({ status: true, data });
+  } catch (err) {
+    res.status(err.statusCode || 500).json({ status: false, message: err.message });
+  }
+};

@@ -11,6 +11,7 @@ const { syncDB }        = require('./models');
 const adminRoutes       = require('./routes/adminRoutes');
 const authRoutes        = require('./routes/authRoutes');
 const { seedAdminUser } = require('./services/authService');
+const { requireAdmin }  = require('./middleware/adminAuth');
 
 const app  = express();
 const PORT = process.env.PORT || 5000;
@@ -53,7 +54,7 @@ app.get('/', (req, res) => {
 
 // ── Routes ────────────────────────────────────────────────────────────────────
 app.use('/api/auth',  authRoutes);
-app.use('/api/admin', adminRoutes);
+app.use('/api/admin', requireAdmin, adminRoutes);
 app.use('/api',       require('./routes/publicRoutes'));
 
 // ── Global error handler ──────────────────────────────────────────────────────
