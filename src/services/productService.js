@@ -1,96 +1,83 @@
-const { Product, Category } = require('../models');
+const { Product, Category, Section } = require('../models');
 const slugify = require('../utils/slugify');
 
-const VALID_HOMEPAGE_SECTIONS = new Set([
-  'home', 'influence', 'infusions', 'skincare', 'fragrance', 'ceremony', 'atmosphere',
-]);
+const includeSections = () => ({
+  model: Section,
+  as: 'sections',
+  attributes: ['name'],
+  through: { attributes: [] },
+});
 
-/**
- * Normalizes the homepageSection field.
- * Sets to null if the value is not in the valid set.
- * @param {object} data
- * @returns {object}
- */
-const normalizeHomepageSection = (data) => {
-  if (!Object.prototype.hasOwnProperty.call(data, 'homepageSection')) return data;
-  if (!VALID_HOMEPAGE_SECTIONS.has(data.homepageSection)) data.homepageSection = null;
-  return data;
+const toJSON = (product) => {
+  const json = product.toJSON();
+  json.sections = (json.sections || []).map(s => s.name);
+  return json;
 };
 
-/**
- * Get all products with their category.
- * @returns {Promise<Product[]>}
- */
 const getAllProducts = async () => {
-  return Product.findAll({
-    include: [{ model: Category, as: 'category', attributes: ['id', 'name', 'slug'] }],
+  const products = await Product.findAll({
+    include: [
+      { model: Category, as: 'category', attributes: ['id', 'name', 'slug'] },
+      includeSections(),
+    ],
     order: [['createdAt', 'ASC']],
   });
+  return products.map(toJSON);
 };
 
-/**
- * Get the most recently created product.
- * @returns {Promise<Product|null>}
- */
 const getLatestProduct = async () => {
-  return Product.findOne({
-    include: [{ model: Category, as: 'category', attributes: ['id', 'name', 'slug'] }],
+  const product = await Product.findOne({
+    include: [
+      { model: Category, as: 'category', attributes: ['id', 'name', 'slug'] },
+      includeSections(),
+    ],
     order: [['createdAt', 'DESC']],
   });
+  return product ? toJSON(product) : null;
 };
 
-/**
- * Get a single product by primary key.
- * @param {number} id
- * @returns {Promise<Product>}
- */
 const getProductById = async (id) => {
   const product = await Product.findByPk(id, {
-    include: [{ model: Category, as: 'category' }],
+    include: [
+      { model: Category, as: 'category' },
+      includeSections(),
+    ],
   });
   if (!product) {
     const err = new Error('Product not found');
     err.statusCode = 404;
     throw err;
   }
-  return product;
+  return toJSON(product);
 };
 
-/**
- * Get a single product by its slug.
- * @param {string} slug
- * @returns {Promise<Product>}
- */
 const getProductBySlug = async (slug) => {
   const product = await Product.findOne({
     where: { slug },
-    include: [{ model: Category, as: 'category' }],
+    include: [
+      { model: Category, as: 'category' },
+      includeSections(),
+    ],
   });
   if (!product) {
     const err = new Error('Product not found');
     err.statusCode = 404;
     throw err;
   }
-  return product;
+  return toJSON(product);
 };
 
-/**
- * Create a new product.
- * Auto-generates slug from name if not provided.
- * @param {object} data
- * @returns {Promise<Product>}
- */
 const createProduct = async (data) => {
   const slug = data.slug || slugify(data.name);
-  return Product.create(normalizeHomepageSection({ ...data, slug }));
+  const { sections: sectionNames, ...productData } = data;
+  const product = await Product.create({ ...productData, slug });
+  if (sectionNames && Array.isArray(sectionNames)) {
+    const sectionRows = await Section.findAll({ where: { name: sectionNames } });
+    await product.setSections(sectionRows);
+  }
+  return getProductById(product.id);
 };
 
-/**
- * Update an existing product by ID.
- * @param {number} id
- * @param {object} data
- * @returns {Promise<Product>}
- */
 const updateProduct = async (id, data) => {
   const product = await Product.findByPk(id);
   if (!product) {
@@ -98,12 +85,16 @@ const updateProduct = async (id, data) => {
     err.statusCode = 404;
     throw err;
   }
-  const normalized = normalizeHomepageSection({ ...data });
-  if (normalized.name && !normalized.slug) {
-    normalized.slug = slugify(normalized.name);
+  const { sections: sectionNames, ...productData } = data;
+  if (productData.name && !productData.slug) {
+    productData.slug = slugify(productData.name);
   }
-  await product.update(normalized);
-  return product;
+  await product.update(productData);
+  if (sectionNames && Array.isArray(sectionNames)) {
+    const sectionRows = await Section.findAll({ where: { name: sectionNames } });
+    await product.setSections(sectionRows);
+  }
+  return getProductById(product.id);
 };
 
 /**
@@ -129,7 +120,7 @@ const deleteProduct = async (id) => {
 const searchProducts = async (query) => {
   const { Op } = require('sequelize');
   const q = `%${query}%`;
-  return Product.findAll({
+  const products = await Product.findAll({
     where: {
       status: 'active',
       [Op.or]: [
@@ -144,10 +135,14 @@ const searchProducts = async (query) => {
         { format:           { [Op.like]: q } },
       ],
     },
-    include: [{ model: Category, as: 'category', attributes: ['id', 'name', 'slug'] }],
+    include: [
+      { model: Category, as: 'category', attributes: ['id', 'name', 'slug'] },
+      includeSections(),
+    ],
     limit: 20,
     order: [['name', 'ASC']],
   });
+  return products.map(toJSON);
 };
 
 module.exports = {
