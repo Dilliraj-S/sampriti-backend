@@ -15,10 +15,14 @@ router.post('/verify-email',                   validateVerifyOtp,       ctrl.ver
 router.post('/resend-otp',       authLimiter,                           ctrl.resendOtp);
 router.post('/login',            loginLimiter, validateLogin,           ctrl.login);
 router.post('/refresh',                                                  ctrl.refresh);
-router.post('/logout',           authenticate,                           ctrl.logout);
-router.post('/logout-all',       authenticate,                           ctrl.logoutAll);
+router.post('/logout',           authenticate,                          ctrl.logout);
+router.post('/logout-all',       authenticate,                          ctrl.logoutAll);
 router.post('/forgot-password',  authLimiter,  validateForgotPassword,  ctrl.forgotPassword);
 router.post('/reset-password',   authLimiter,  validateResetPassword,   ctrl.resetPassword);
-router.get('/me',                authenticate,                           ctrl.getMe);
+router.get('/me',                authenticate,                          ctrl.getMe);
+router.put('/me',                authenticate,                          ctrl.updateProfile);
+router.put('/change-password',   authenticate,                          ctrl.changePassword);
+router.get('/my-orders',         authenticate,                          ctrl.getMyOrders);
+
 
 module.exports = router;

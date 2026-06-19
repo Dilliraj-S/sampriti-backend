@@ -27,6 +27,9 @@ const syncDB = async () => {
   try {
     await sequelize.sync({ alter: true });
     await BlogPost.update({ status: 'published' }, { where: { status: 'draft' } });
+    for (const name of SECTION_NAMES) {
+      await Section.findOrCreate({ where: { name } });
+    }
     console.log('Database synced successfully');
   } catch (error) {
     console.error('Database sync failed:', error.message);

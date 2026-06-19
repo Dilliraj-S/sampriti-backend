@@ -77,3 +77,11 @@ CREATE TABLE IF NOT EXISTS auth_audit_log (
   INDEX idx_event (event),
   INDEX idx_created_at (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ── Delivery address columns (idempotent — safe to re-run) ───────────────────
+ALTER TABLE users ADD COLUMN IF NOT EXISTS address_line1 VARCHAR(255);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS address_line2 VARCHAR(255);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS city         VARCHAR(100);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS state        VARCHAR(100);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS pincode      VARCHAR(20);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS country      VARCHAR(100) DEFAULT 'India';

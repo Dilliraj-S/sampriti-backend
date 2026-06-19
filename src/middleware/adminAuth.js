@@ -1,42 +1,85 @@
-const crypto = require('crypto');
+const { verifyAccessToken } = require('../utils/tokenUtils');
 
-const TOKEN_TTL_MS = 8 * 60 * 60 * 1000;
+/**
+ * Checks if a GET request is a public/guest endpoint on the admin router.
+ * Public routes do not require admin authentication.
+ */
+const isPublicGetRoute = (method, path) => {
+  if (method !== 'GET') return false;
 
-const getSecret = () => process.env.ADMIN_TOKEN_SECRET || process.env.ADMIN_PASSWORD;
+  // Normalize path by removing trailing slash and query params
+  const cleanPath = path.split('?')[0].replace(/\/+$/, '') || '/';
 
-const base64url = (value) => Buffer.from(value).toString('base64url');
+  // Exact public GET endpoints
+  if (
+    cleanPath === '/products' ||
+    cleanPath === '/products/latest' ||
+    cleanPath === '/categories' ||
+    cleanPath === '/banners' ||
+    cleanPath === '/content' ||
+    cleanPath === '/settings'
+  ) {
+    return true;
+  }
 
-const sign = (payload) => {
-  const secret = getSecret();
-  return crypto.createHmac('sha256', secret).update(payload).digest('base64url');
+  // Parameterized public GET endpoints: /products/slug/:slug, /content/:slug
+  if (cleanPath.startsWith('/products/slug/') || cleanPath.startsWith('/content/')) {
+    return true;
+  }
+
+  // Parameterized public GET endpoint: /products/:id (alphanumeric ID without nested slashes)
+  if (cleanPath.startsWith('/products/')) {
+    const subpath = cleanPath.substring(10); // length of '/products/' is 10
+    if (subpath && !subpath.includes('/')) {
+      return true;
+    }
+  }
+
+  return false;
 };
 
-const createAdminToken = (email) => {
-  const payload = base64url(JSON.stringify({ email, exp: Date.now() + TOKEN_TTL_MS }));
-  return `${payload}.${sign(payload)}`;
-};
+/**
+ * Admin authorization middleware.
+ * Verifies JWT token and checks if the role is admin/superadmin.
+ * Bypasses checks for public GET endpoints.
+ */
+const requireAdmin = (req, res, next) => {
+  // 1. Allow public GET routes
+  if (isPublicGetRoute(req.method, req.path)) {
+    // If a token is provided anyway, decode it for req.user info
+    const authHeader = req.headers['authorization'];
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.split(' ')[1];
+      try {
+        req.user = verifyAccessToken(token);
+      } catch (_) {
+        // Safe to ignore on public routes
+      }
+    }
+    return next();
+  }
 
-const verifyAdminToken = (token) => {
-  if (!token || !getSecret()) return null;
-  const [payload, signature] = token.split('.');
-  if (!payload || !signature || signature !== sign(payload)) return null;
+  // 2. Protected routes — require access token
+  const authHeader = req.headers['authorization'] || '';
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ status: false, message: 'Access token required.' });
+  }
 
+  const token = authHeader.split(' ')[1];
   try {
-    const data = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
-    if (!data.exp || data.exp < Date.now()) return null;
-    return data;
-  } catch {
-    return null;
+    const decoded = verifyAccessToken(token);
+    if (decoded.role !== 'admin' && decoded.role !== 'superadmin') {
+      return res.status(403).json({ status: false, message: 'Access denied. Admins only.' });
+    }
+    req.admin = decoded; // controller/route compatibility
+    req.user = decoded;  // standard auth compatibility
+    next();
+  } catch (err) {
+    if (err.name === 'TokenExpiredError') {
+      return res.status(401).json({ status: false, message: 'Access token expired.', code: 'TOKEN_EXPIRED' });
+    }
+    return res.status(401).json({ status: false, message: 'Invalid access token.' });
   }
 };
 
-const requireAdmin = (req, res, next) => {
-  const header = req.headers.authorization || '';
-  const token = header.startsWith('Bearer ') ? header.slice(7) : '';
-  const admin = verifyAdminToken(token);
-  if (!admin) return res.status(401).json({ status: false, message: 'Admin login required' });
-  req.admin = admin;
-  next();
-};
-
-module.exports = { createAdminToken, requireAdmin };
+module.exports = { requireAdmin };
