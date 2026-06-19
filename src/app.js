@@ -1,4 +1,5 @@
 const express      = require('express');
+const http         = require('http');
 const cors         = require('cors');
 const path         = require('path');
 const helmet       = require('helmet');
@@ -13,8 +14,12 @@ const authRoutes        = require('./routes/authRoutes');
 const { seedAdminUser } = require('./services/authService');
 const { requireAdmin }  = require('./middleware/adminAuth');
 
-const app  = express();
-const PORT = process.env.PORT || 5000;
+const app    = express();
+const server = http.createServer(app);
+const PORT   = process.env.PORT || 5000;
+
+const { initSocketIO } = require('./websocket');
+initSocketIO(server);
 
 // ── Trust Hostinger's nginx reverse proxy ─────────────────────────────────────
 // Required for express-rate-limit to correctly read client IPs via X-Forwarded-For
@@ -58,6 +63,11 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/payments', require('./routes/paymentRoutes'));
 app.use('/api',       require('./routes/publicRoutes'));
 
+// ── 404 — catch-all: always return JSON, never HTML ──────────────────────────
+app.use((req, res) => {
+  res.status(404).json({ status: false, message: `Route ${req.method} ${req.originalUrl} not found` });
+});
+
 // ── Global error handler ──────────────────────────────────────────────────────
 app.use((err, req, res, next) => {
   console.error('Error:', err.message);
@@ -87,7 +97,11 @@ const runMigration = async () => {
   });
 
   for (const stmt of statements) {
-    await conn.query(stmt);
+    try {
+      await conn.query(stmt);
+    } catch (stmtErr) {
+      console.warn(`[migration] Skipped statement (${stmtErr.message.substring(0, 80)}): ${stmt.substring(0, 60)}...`);
+    }
   }
   await conn.end();
   console.log('[migration] Auth tables verified/created.');
@@ -97,7 +111,7 @@ syncDB()
   .then(() => runMigration())
   .then(() => seedAdminUser())
   .then(() => {
-    app.listen(PORT, () => {
+    server.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
     });
   })

@@ -60,9 +60,21 @@ async function createOrder(amount, currency, internalOrderId, items, customerInf
     };
   }
 
+  const returnUrl = process.env.PAYPAL_RETURN_URL || 'http://localhost:3000/success';
+  const cancelUrl = process.env.PAYPAL_CANCEL_URL || 'http://localhost:3000/cart';
+
   const request = new paypal.orders.OrdersCreateRequest();
   request.prefer('return=representation');
-  request.requestBody({ intent: 'CAPTURE', purchase_units: [purchaseUnit] });
+  request.requestBody({
+    intent: 'CAPTURE',
+    purchase_units: [purchaseUnit],
+    application_context: {
+      return_url: returnUrl,
+      cancel_url: cancelUrl,
+      user_action: 'PAY_NOW',
+      brand_name: 'Sampriti Botanicals',
+    },
+  });
 
   try {
     const response = await client().execute(request);

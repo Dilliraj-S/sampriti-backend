@@ -137,7 +137,6 @@ const searchProducts = async (query) => {
     },
     include: [
       { model: Category, as: 'category', attributes: ['id', 'name', 'slug'] },
-      includeSections(),
     ],
     limit: 20,
     order: [['name', 'ASC']],

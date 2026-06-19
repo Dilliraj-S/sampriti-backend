@@ -1,5 +1,6 @@
 const customerOrderService = require('../services/customerOrderService');
 const paypalService = require('../services/paypalService');
+const { getIO } = require('../websocket');
 
 exports.createOrder = async (req, res) => {
   try {
@@ -57,6 +58,17 @@ exports.captureOrder = async (req, res) => {
 
     const clientIp = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip || req.connection?.remoteAddress || 'unknown';
     const result = await customerOrderService.capturePaypalPayment(orderId, paypalOrderId, clientIp);
+
+    const io = getIO();
+    if (io) {
+      io.emit('new_payment', {
+        orderId: result.order.id,
+        customerName: result.order.customerInfo?.fullName || 'Unknown',
+        total: result.order.total,
+        currency: 'USD',
+        time: new Date().toISOString(),
+      });
+    }
 
     return res.json({
       status: true,

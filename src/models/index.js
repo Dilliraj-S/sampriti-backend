@@ -23,6 +23,9 @@ Review.belongsTo(Product, { foreignKey: 'productId', as: 'product' });
 Order.hasMany(PaymentTransaction, { foreignKey: 'orderId', as: 'transactions' });
 PaymentTransaction.belongsTo(Order, { foreignKey: 'orderId', as: 'order' });
 
+const SECTION_NAMES = []; // TODO: colleague to fill with actual section names
+const Section = require('./Section');
+
 const syncDB = async () => {
   try {
     await sequelize.sync({ alter: true });
