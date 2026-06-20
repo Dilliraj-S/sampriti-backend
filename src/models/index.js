@@ -23,8 +23,11 @@ Review.belongsTo(Product, { foreignKey: 'productId', as: 'product' });
 Order.hasMany(PaymentTransaction, { foreignKey: 'orderId', as: 'transactions' });
 PaymentTransaction.belongsTo(Order, { foreignKey: 'orderId', as: 'order' });
 
-const SECTION_NAMES = []; // TODO: colleague to fill with actual section names
+const SECTION_NAMES = ['home', 'influence', 'infusions', 'skincare', 'fragrance', 'ceremony', 'atmosphere'];
 const Section = require('./Section');
+
+Product.belongsToMany(Section, { through: 'product_sections', foreignKey: 'productId', otherKey: 'sectionId', as: 'sections' });
+Section.belongsToMany(Product, { through: 'product_sections', foreignKey: 'sectionId', otherKey: 'productId', as: 'products' });
 
 const syncDB = async () => {
   try {
@@ -53,4 +56,5 @@ module.exports = {
   BlogPost,
   Setting,
   PaymentTransaction,
+  Section,
 };

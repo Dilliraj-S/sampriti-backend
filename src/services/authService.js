@@ -391,8 +391,7 @@ const resetPassword = async ({ token, password }, ip, userAgent) => {
 
 const getMe = async (userId) => {
   const [rows] = await pool.query(
-    `SELECT id, email, full_name, phone, role, avatar_url, created_at,
-            address_line1, address_line2, city, state, pincode, country
+    `SELECT id, email, full_name, phone, role, avatar_url, created_at
      FROM users WHERE id = ? AND is_active = 1 LIMIT 1`,
     [userId]
   );

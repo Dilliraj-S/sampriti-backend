@@ -1,16 +1,22 @@
-const { Product, Category } = require('../models');
+const { Product, Category, Section } = require('../models');
 const slugify = require('../utils/slugify');
 
 const toJSON = (product) => {
   const json = product.toJSON();
+  if (json.sections) {
+    json.sections = json.sections.map((s) => s.name || s);
+  }
   return json;
 };
 
+const productIncludes = [
+  { model: Category, as: 'category', attributes: ['id', 'name', 'slug'] },
+  { model: Section, as: 'sections', attributes: ['name'], through: { attributes: [] } },
+];
+
 const getAllProducts = async () => {
   const products = await Product.findAll({
-    include: [
-      { model: Category, as: 'category', attributes: ['id', 'name', 'slug'] },
-    ],
+    include: productIncludes,
     order: [['createdAt', 'ASC']],
   });
   return products.map(toJSON);
@@ -18,9 +24,7 @@ const getAllProducts = async () => {
 
 const getLatestProduct = async () => {
   const product = await Product.findOne({
-    include: [
-      { model: Category, as: 'category', attributes: ['id', 'name', 'slug'] },
-    ],
+    include: productIncludes,
     order: [['createdAt', 'DESC']],
   });
   return product ? toJSON(product) : null;
@@ -28,9 +32,7 @@ const getLatestProduct = async () => {
 
 const getProductById = async (id) => {
   const product = await Product.findByPk(id, {
-    include: [
-      { model: Category, as: 'category' },
-    ],
+    include: productIncludes,
   });
   if (!product) {
     const err = new Error('Product not found');
@@ -43,9 +45,7 @@ const getProductById = async (id) => {
 const getProductBySlug = async (slug) => {
   const product = await Product.findOne({
     where: { slug },
-    include: [
-      { model: Category, as: 'category' },
-    ],
+    include: productIncludes,
   });
   if (!product) {
     const err = new Error('Product not found');
@@ -59,6 +59,10 @@ const createProduct = async (data) => {
   const slug = data.slug || slugify(data.name);
   const { sections: sectionNames, ...productData } = data;
   const product = await Product.create({ ...productData, slug });
+  if (Array.isArray(sectionNames) && sectionNames.length) {
+    const sectionRows = await Section.findAll({ where: { name: sectionNames } });
+    await product.setSections(sectionRows);
+  }
   return getProductById(product.id);
 };
 
@@ -74,6 +78,10 @@ const updateProduct = async (id, data) => {
     productData.slug = slugify(productData.name);
   }
   await product.update(productData);
+  if (Array.isArray(sectionNames)) {
+    const sectionRows = await Section.findAll({ where: { name: sectionNames } });
+    await product.setSections(sectionRows);
+  }
   return getProductById(product.id);
 };
 
@@ -115,9 +123,7 @@ const searchProducts = async (query) => {
         { format:           { [Op.like]: q } },
       ],
     },
-    include: [
-      { model: Category, as: 'category', attributes: ['id', 'name', 'slug'] },
-    ],
+    include: productIncludes,
     limit: 20,
     order: [['name', 'ASC']],
   });

@@ -3,7 +3,11 @@ require('dotenv').config({ path: require('path').join(__dirname, '../../.env') }
 
 const seed = async () => {
   try {
+    // Temporarily disable foreign key checks to allow dropping tables
+    // when child/association tables (e.g. product_sections) still exist.
+    await sequelize.query('SET FOREIGN_KEY_CHECKS = 0');
     await sequelize.sync({ force: true });
+    await sequelize.query('SET FOREIGN_KEY_CHECKS = 1');
     console.log('Tables dropped and recreated');
 
     const categories = await Category.bulkCreate([

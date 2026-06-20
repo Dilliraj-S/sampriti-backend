@@ -123,6 +123,15 @@ async function capturePaypalPayment(orderId, paypalOrderId, clientIp) {
     order.status = 'processing';
     await order.save({ transaction });
 
+    if (Array.isArray(order.items)) {
+      for (const item of order.items) {
+        const productSlug = item.slug || item.id;
+        if (productSlug) {
+          await Product.decrement('stock', { by: item.quantity || 1, where: { slug: productSlug }, transaction });
+        }
+      }
+    }
+
     await transaction.commit();
 
     if (order.customerId) {

@@ -54,4 +54,15 @@ const getReviewStats = async () => {
   return { total, approved, pending };
 };
 
-module.exports = { getReviews, updateReviewStatus, deleteReview, getReviewStats };
+const createReview = async ({ productId, productSlug, name, email, rating, title, comment }) => {
+  return Review.create({ productId, productSlug, name, email, rating, title, comment, status: 'pending' });
+};
+
+const getProductReviews = async (slug) => {
+  return Review.findAll({
+    where: { productSlug: slug, status: 'approved' },
+    order: [['createdAt', 'DESC']],
+  });
+};
+
+module.exports = { getReviews, updateReviewStatus, deleteReview, getReviewStats, createReview, getProductReviews };

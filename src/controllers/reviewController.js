@@ -35,3 +35,21 @@ exports.stats = async (req, res) => {
     res.status(err.statusCode || 500).json({ status: false, message: err.message });
   }
 };
+
+exports.create = async (req, res) => {
+  try {
+    const data = await reviewService.createReview(req.body);
+    res.status(201).json({ status: true, data });
+  } catch (err) {
+    res.status(err.statusCode || 500).json({ status: false, message: err.message });
+  }
+};
+
+exports.productReviews = async (req, res) => {
+  try {
+    const data = await reviewService.getProductReviews(req.params.slug);
+    res.json({ status: true, data });
+  } catch (err) {
+    res.status(err.statusCode || 500).json({ status: false, message: err.message });
+  }
+};

@@ -1,3 +1,4 @@
+const { Product, Order } = require('../models');
 const customerOrderService = require('../services/customerOrderService');
 const paypalService = require('../services/paypalService');
 const { getIO } = require('../websocket');
@@ -29,7 +30,6 @@ exports.createPaypalOrder = async (req, res) => {
     const { orderId } = req.body;
     if (!orderId) return res.status(400).json({ status: false, message: 'orderId is required' });
 
-    const { Order } = require('../models');
     const order = await Order.findByPk(orderId);
     if (!order) return res.status(404).json({ status: false, message: 'Order not found' });
 
@@ -122,6 +122,16 @@ exports.webhook = async (req, res) => {
             txn.paypalCaptureId = resource.id;
             await txn.save();
             await Order.update({ paymentStatus: 'success', status: 'processing' }, { where: { id: txn.orderId } });
+
+            const order = await Order.findByPk(txn.orderId);
+            if (order && Array.isArray(order.items)) {
+              for (const item of order.items) {
+                const productSlug = item.slug || item.id;
+                if (productSlug) {
+                  await Product.decrement('stock', { by: item.quantity || 1, where: { slug: productSlug } });
+                }
+              }
+            }
           }
         }
         break;
