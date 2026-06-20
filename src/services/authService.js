@@ -50,10 +50,10 @@ const seedAdminUser = async () => {
   );
 
   if (existing.length > 0) {
-    // Admin exists — ensure role is correct
+    const password_hash = await hashPassword(adminPassword);
     await pool.query(
-      "UPDATE users SET role = 'admin', is_verified = 1, is_active = 1 WHERE email = ?",
-      [adminEmail]
+      "UPDATE users SET role = 'admin', is_verified = 1, is_active = 1, password_hash = ? WHERE email = ?",
+      [password_hash, adminEmail]
     );
     console.log('[auth] Admin user verified in users table.');
     return;
@@ -93,9 +93,10 @@ const registerUser = async ({ full_name, email, password }, ip, userAgent) => {
     [userId, otpHash, expires]
   );
 
-  sendOtpEmail(email, otp, full_name).catch(err =>
-    console.error('[authService.registerUser] Email send failed:', err.message)
-  );
+  sendOtpEmail(email, otp, full_name).catch(err => {
+    console.error('[authService.registerUser] Email send failed:', err.message);
+    if (err.response) console.error('[authService.registerUser] SMTP response:', err.response);
+  });
 
   await audit(userId, 'register', ip, userAgent);
   return { message: 'Registration successful. Please check your email for the 6-digit verification code.' };
@@ -464,7 +465,7 @@ const getMyOrders = async (userId) => {
 
   const customerId = customers[0].id;
   const [orders] = await pool.query(
-    'SELECT id, items, total, status, paymentMethod, paymentStatus, createdAt FROM orders WHERE customerId = ? ORDER BY createdAt DESC LIMIT 20',
+    'SELECT id, items, total, shipping, status, paymentMethod, paymentStatus, customerInfo, shippingAddress, createdAt FROM orders WHERE customerId = ? ORDER BY createdAt DESC LIMIT 20',
     [customerId]
   );
   return orders;

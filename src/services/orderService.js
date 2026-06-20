@@ -1,4 +1,5 @@
 const { Order, Customer } = require('../models');
+const { sendOrderStatusEmail } = require('../utils/mailer');
 
 /**
  * Get all orders with optional status filter and search.
@@ -41,7 +42,23 @@ const updateOrderStatus = async (id, status) => {
     err.statusCode = 404;
     throw err;
   }
+  const oldStatus = order.status;
   await order.update({ status });
+
+  try {
+    const customerEmail = order.customerInfo?.email;
+    const customerName = order.customerInfo?.fullName || order.customerInfo?.name || 'Customer';
+    console.log('[orderService] Attempting to send status email - order:', id, 'oldStatus:', oldStatus, 'newStatus:', status, 'to:', customerEmail);
+    if (customerEmail) {
+      await sendOrderStatusEmail(customerEmail, customerName, status, order.id, order.shippingAddress);
+      console.log('[orderService] Status email sent successfully for order', id);
+    } else {
+      console.warn('[orderService] No customer email found on order', id, '- skipping notification');
+    }
+  } catch (emailErr) {
+    console.error('[orderService] Failed to send status email for order', id, ':', emailErr.message);
+  }
+
   return order;
 };
 

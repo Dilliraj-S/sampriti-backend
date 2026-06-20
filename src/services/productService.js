@@ -1,16 +1,8 @@
-const { Product, Category, Section } = require('../models');
+const { Product, Category } = require('../models');
 const slugify = require('../utils/slugify');
-
-const includeSections = () => ({
-  model: Section,
-  as: 'sections',
-  attributes: ['name'],
-  through: { attributes: [] },
-});
 
 const toJSON = (product) => {
   const json = product.toJSON();
-  json.sections = (json.sections || []).map(s => s.name);
   return json;
 };
 
@@ -18,7 +10,6 @@ const getAllProducts = async () => {
   const products = await Product.findAll({
     include: [
       { model: Category, as: 'category', attributes: ['id', 'name', 'slug'] },
-      includeSections(),
     ],
     order: [['createdAt', 'ASC']],
   });
@@ -29,7 +20,6 @@ const getLatestProduct = async () => {
   const product = await Product.findOne({
     include: [
       { model: Category, as: 'category', attributes: ['id', 'name', 'slug'] },
-      includeSections(),
     ],
     order: [['createdAt', 'DESC']],
   });
@@ -40,7 +30,6 @@ const getProductById = async (id) => {
   const product = await Product.findByPk(id, {
     include: [
       { model: Category, as: 'category' },
-      includeSections(),
     ],
   });
   if (!product) {
@@ -56,7 +45,6 @@ const getProductBySlug = async (slug) => {
     where: { slug },
     include: [
       { model: Category, as: 'category' },
-      includeSections(),
     ],
   });
   if (!product) {
@@ -71,10 +59,6 @@ const createProduct = async (data) => {
   const slug = data.slug || slugify(data.name);
   const { sections: sectionNames, ...productData } = data;
   const product = await Product.create({ ...productData, slug });
-  if (sectionNames && Array.isArray(sectionNames)) {
-    const sectionRows = await Section.findAll({ where: { name: sectionNames } });
-    await product.setSections(sectionRows);
-  }
   return getProductById(product.id);
 };
 
@@ -90,10 +74,6 @@ const updateProduct = async (id, data) => {
     productData.slug = slugify(productData.name);
   }
   await product.update(productData);
-  if (sectionNames && Array.isArray(sectionNames)) {
-    const sectionRows = await Section.findAll({ where: { name: sectionNames } });
-    await product.setSections(sectionRows);
-  }
   return getProductById(product.id);
 };
 

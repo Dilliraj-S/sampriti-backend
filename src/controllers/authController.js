@@ -49,13 +49,14 @@ exports.resendOtp = async (req, res) => {
 exports.login = async (req, res) => {
   try {
     const result = await authService.loginUser(req.body, ip(req), ua(req));
-    // Refresh token → HttpOnly cookie (browser sends it automatically)
+    // Refresh token → HttpOnly cookie + response body (for cross-origin clients)
     res.cookie('refreshToken', result.refreshToken, cookieOpts);
     res.json({
-      status:      true,
-      accessToken: result.accessToken,
-      user:        result.user,
-      redirectTo:  result.redirectTo,
+      status:       true,
+      accessToken:  result.accessToken,
+      refreshToken: result.refreshToken,
+      user:         result.user,
+      redirectTo:   result.redirectTo,
     });
   } catch (err) {
     const payload = { status: false, message: err.message };
@@ -67,13 +68,13 @@ exports.login = async (req, res) => {
 // POST /api/auth/refresh
 exports.refresh = async (req, res) => {
   try {
-    const rawRefreshToken = req.cookies?.refreshToken;
+    const rawRefreshToken = req.cookies?.refreshToken || req.body?.refreshToken;
     if (!rawRefreshToken) {
       return res.status(401).json({ status: false, message: 'No refresh token.' });
     }
     const result = await authService.refreshAccessToken(rawRefreshToken, ip(req), ua(req));
     res.cookie('refreshToken', result.refreshToken, cookieOpts);
-    res.json({ status: true, accessToken: result.accessToken });
+    res.json({ status: true, accessToken: result.accessToken, refreshToken: result.refreshToken });
   } catch (err) {
     res.clearCookie('refreshToken');
     res.status(err.statusCode || 500).json({ status: false, message: err.message });
